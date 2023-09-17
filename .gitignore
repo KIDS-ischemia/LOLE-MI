@@ -47,3 +47,15 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Data
+/data/*
+/output/*
+/tmp/*
+
+# quarto files
+*.pdf
+*.pfd
+/reports/supplement_files
+/reports/supplement_cache
+/reports/images

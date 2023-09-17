@@ -1,0 +1,461 @@
+---
+title: "**Excess mortality and residual life expectancy after myocardial infarction**"
+subtitle: "Supplement"
+author:   
+  - Christian Reitan 
+  - Pontus Andell
+  - Joakim Alfredsson
+  - David Erlinge
+  - Robin Hofmann
+  - Bertil Lindahl
+  - Moa Simonsson
+  - Paul W Dickman
+  - Tomas Jernberg
+format:
+  pdf:
+    fig-width: 7
+    fig-height: 5
+    include-in-header: 
+      text: |
+        \usepackage{typearea}
+        \setkomafont{disposition}{\rmfamily}
+pdf-engine: xelatex
+mainfont: Times New Roman
+sansfont: Times New Roman
+editor: source
+toc: true
+bibliography: references.bib
+csl: the-lancet.csl
+execute:
+  cache: false
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(patchwork)
+library(kableExtra)
+library(knitr)
+library(gt)
+library(gtsummary)
+library(flextable)
+opts_chunk$set(warning=FALSE, message=FALSE, echo = FALSE, dev = "cairo_pdf")
+extrafont::loadfonts()
+theme_set(crgg::theme_ki_standard())
+```
+
+\newpage
+
+## **Data**
+
+All case subjects were identified from the SWEDEHEART subregister RIKS-HIA which registers all individuals admitted to a cardiac care unit in Sweden, and were tracked using their national personal identification number (*personnummer*). Statistics Sweden (SCB), the national statistics agency, then matched all individuals with up to 5 comparators with (to SCB) no known prior MI. The comparators were matched on age, sex, year of birth, and geographic location (*kommun*). The resulting list of individuals were then enriched with data from SCB; socioeconomic variables. The list delivered to SCB contained some artifacts, mainly test persons from SWEDEHEART, which were found to not be alive when the register started, and were thus removed. All valid cases were enriched with SWEDEHEART/RIKS-HIA data, and with data from the National Board of Health and Welfare (ICD codes on prior diagnoses from the Patient register and the prescribed drug register). Some cases and comparators were then found, based on these variables, to have experienced a prior MI, and were thus removed. Some cases were found to have multiple entries that were registered as the first MI, we then selected only the first. Cases without at least one matched comparator were excluded. The process is also illustrated in fig. S1.
+
+#### **Variables**
+
+Some variables were processed from the original data:
+
+* Comorbidity variables were derived from corresponding ICD diagnoses present before the MI or index date. 
+
+* The hypertension variable was derived from either a ICD diagnosis of Hypertension, or medical treatment with calcium antagonists or ACEi/ARB without a Heart failure diagnosis.
+
+* The disposable income variable was originally defined in units of 100 SEK, we changed this to 1 SEK.
+
+* Medication on admission was defined as a dispensation of the medication in question within the last 6 months.
+
+* Single antiplatelet treatment was defined as only ASA or other antiplatelet drug prescription. Dual therapy as ASA plus another antiplatelet drug.
+
+* Exact age was not available for the comparators. We therefore estimated their age as the index date minus their birth year.
+
+* LVEF was originally stratified as Normal (>=50%), moderately impaired (40-49%), impaired (30-39%) and very impaired (<30%). For the main analyses, we dichotomized this into Normal (>=50%), or impaired (<50%).
+
+### **Figure S1: Data selection flowchart**
+
+![](images/flowchart.pdf)
+
+### **Figure S2: yearly distribution of cases and comparators.**
+
+```{r year_dist}
+readRDS(file = "../output/year_dist.RDS") %>%
+  mutate(case_or_control = case_when(case_or_control == "Control" ~ "Comparators",
+                                     T ~ "Cases")) %>%
+  ggplot(aes(x = d_indexyear, y = n, fill = case_or_control)) +
+  geom_col(position = "dodge") +
+  crgg::scale_fill_ki_d(palettename = "ki_function_2") +
+  xlab("Index year") + ylab("N") +
+  labs(fill = "")
+```
+
+Number of cases and comparators per year in the study.
+
+### **Figure S3: Missing values**
+
+```{r missing}
+#| fig.width: 10
+#| fig.height: 8
+common_vars <- 
+  readRDS(file = "../output/missingness_table_all.RDS") %>%
+  mutate(case_or_control = case_when(case_or_control == "Control" ~ "Comparators",
+                                     T ~ "Cases")) %>%
+  ggplot(aes(x = pct_miss, y = reorder(variable, -pct_miss), fill = case_or_control)) +
+  geom_col(position = "dodge") +
+  xlab("Percent missing") + ylab("Variable") +
+    crgg::scale_fill_ki_d(palettename = "ki_function_2") +
+  labs(fill = "")
+inhospital_vars <- 
+  readRDS(file = "../output/missingness_table_inhospital.RDS") %>%
+  mutate(variable = ifelse(variable == "LVEF after MI", "LVEF after MI*", variable)) %>%
+  ggplot(aes(x = pct_miss, y = reorder(variable, -pct_miss), fill = "Cases")) +
+  geom_col(position = "dodge") +
+  xlab("Percent missing") + ylab("") +
+    crgg::scale_fill_ki_d(palettename = "ki_function_2") +
+  labs(fill = "") 
+
+common_vars + inhospital_vars + plot_annotation(tag_levels = 'A')
+
+```
+
+Percentage missing for all variables common for cases and comparators (those used for model adjustment) (A), and variables describing the in-hospital course for the case group (B).
+
+\* LVEF recorded regularly from 1998. When earlier years are excluded the percentage missing is 33.4%.
+
+\newpage
+
+## **Statistical methods**
+
+#### **Flexible parametric survival models**
+
+To model survival and relative survival, we employed flexible parametric survival models (Royston-Parmar models), which enable fitting smooth curves to the survival data.[@Royston2002] These models offer the advantage of post-estimation analysis of survival curve derivatives, such as hazard over time. Additionally, they allow us to relax the proportional hazards assumption, facilitating the modeling of time-varying effects. This makes it possible to capture the steep initial difference in mortality expected between a population with myocardial infarction (MI) and one without.
+
+#### **Survival analysis**
+
+The flexible parametric survival models is specified similarly to the Cox model, with the exeption of the need specify the degrees of freedom for the underlying spline for the baseline hazard. If specifying a time-varying effect for one or more covariates, the degrees of freedom for those splines also needs to be manually specified. `rstpm2` by default disperses the spline knots (*n = df - 1*) evenly throughout the observation period. We tested all combinations of number of knots (*n = 0-9*) for the background hazard and the time-varying relationship and assessed AIC values. We found that the standard knot placement scheme did not work satisfactorily on the time-varying relationship between cases and comparators, resulting in overfitted models when minimizing AIC. We therefore opted to manually place knots for the time-varying relationship to improve the graphical fit compared to the corresponding Kaplan Meier curves. As the survival curve for cases has a very steep drop in the initial year of follow-up we placed two knots during that time, and one near the middle of follow-up. This resulted in a better graphical fit, reasonable hazard curve shapes, and an even lower AIC value.
+
+To describe mortality patterns, we modeled cases and comparators, in subgroups based on age (\<60, 60-75, and \>75 years), and sex, as well as separate analyses also grouped on left ventricular ejection fraction (LVEF), stratified as normal LVEF (\>50%) after MI or impaired LVEF (\<50%) assessed during the hospital stay after MI. To account for the differences in mortality of our case and comparator groups over time, we specified a time-varying effect for the case/comparator variable. Using these models, we estimated and plotted survival, mortality rates and hazard ratios over time.
+
+#### **Relative survival and life table adjustment**
+
+Flexible parametric survival models can be extended to model relative survival, enabling the estimation of loss of life expectancy and mean residual survival times. These methods typically employ a life table based on a reference population, often sourced from publicly available databases like the Human Mortality Database.
+
+However, for our specific study on MI in Sweden, using a life table based on the general Swedish population would lead to biased estimates. It would require the assumption that the effect of the disease on the overall population's mortality is negligible, which is not appropriate for MI, given its significant impact on mortality. To address this, we constructed custom adjusted life tables to better reflect the mortality of the comparator population. The steps to do this were as follows:
+
+1.  We first applied a flexible parametric model to a time-split version of the comparator dataset, with age, sex, and calendar year as covariates.
+2.  Using this model, we predicted hazards for all combinations of age, sex, and year present in the dataset.
+3.  To smooth the predicted hazards, we fitted a regression model to the ratios between the predicted hazards and the hazards derived from Sweden's general population.
+4.  By using the smoothed ratios, we adjusted the general Swedish life table to create a custom life table specifically tailored to the comparator population.
+
+Additionally, we constructed other versions of the life table adjusted for baseline differences for a specific group (for instance those with LVEF <50%). In this case, we included all available covariables (those presented in table 1) in the flexible parametric model. We used case population data to predict on, thus predicting hazard values for a population with the same comorbidity pattern as the case population, but without MI (as the model was fit on comparators only). The resulting hazards were averaged for each combination of age, year, and sex and then smoothed as described above. These custom life tables were used to fit two sets of models:
+
+A)  Relative flexible parametric models for the total case population, as well as for those with preserved LVEF and those with impaired LVEF.
+B)  Identical models to those in A), but this time using the covariable-adjusted life table. Using the relative models, we estimated loss of life expectancy and mean residual lifetime for males and females at ages 50, 65, and 80, for the years 1991-2022. The same calculations were performed separately for models involving preserved and impaired LVEF.
+
+When deciding the number of knots for these relative models we assessed the AIC values for each model, and found that, in most cases, `df =  5-8` minimized values. However, upon further assessment of the models, we found that this approach in some cases led to strange results, such as inconsistent estimates of LOLE and MRL. It also resulted in "wiggly" hazard curves, which we interpreted as probable overfitting. We therefore adjusted some models after graphical assessment of survival and hazard curves and ended up with df´s in the range of 4-7, preferring lower, rather than higher degrees of freedom. This reasoning is consistent with the suggestions from Royston and Lambert (2011).[@royston_flexible_2011]
+
+#### **Software and packages**
+
+All data handling and statistics were performed in `r version$version.string`.[@Rcore] We used the packages `survival` and `rstpm2` for R to model survival.[@survival; @rstpm2] For relative survival post-estimation (loss of life expectancy measures and mean residual lifetime) we used the `CuRe` package.[@cuRe] For data handling and graphics we used the `tidyverse` and related packages (i.e `ggplot`, `broom`, `tidyr`, `patchwork`). For descriptive statistics we used the package `gtsummary`.[@broom; @ggplot2; @broom-2; @patchwork; @gtsummary] The statistical code for this project is available on https://github.com/KIDS-ischemia/LOLE-MI.
+
+#### **References**
+
+::: {#refs}
+:::
+
+\newpage
+
+## **Supplementary figures**
+
+### **Figure S4a LOLE for LVEF subcategories (Unadjusted)**
+
+```{r lole_unadj}
+#| fig.width: 10
+#| fig.height: 8
+readRDS("../output/LOLE_MEASURES_adjusted_granular_unadjusted.rds") %>%
+  filter(str_detect(type, "lole")) %>%
+  pivot_wider(values_from = Value, names_from = valuetype) %>%
+  ggplot(aes(x = d_indexyear, y = Estimate, ymin = lower, ymax = upper, fill = rt_sex, color = rt_sex)) +
+  geom_line() +
+  geom_ribbon(alpha = .1, linewidth = 0) +
+  facet_grid(rows = vars(normal_ef), cols = vars(c_age)) +
+  labs(linetype = "", color = "") +
+  crgg::theme_ki_standard() +
+  crgg::scale_colour_ki_d() +
+  crgg::scale_fill_ki_d() +
+  labs(fill = "") +
+  ylab("Loss of life expectancy (years)") +
+  xlab("Calendar year") +
+  coord_cartesian(ylim = c(0, 25))
+```
+
+Loss of life expectancy per index year.
+
+### **Figure S4b LOLE for LVEF subcategories (Adjusted)**
+
+```{r lole_adj}
+#| fig.width: 10
+#| fig.height: 8
+  readRDS("../output/LOLE_MEASURES_adjusted_granular.rds") %>%
+  filter(str_detect(type, "lole")) %>%
+  pivot_wider(values_from = Value, names_from = valuetype) %>%
+  ggplot(aes(x = d_indexyear, y = Estimate, ymin = lower, ymax = upper, fill = rt_sex, color = rt_sex)) +
+  geom_line() +
+  geom_ribbon(alpha = .1, linewidth = 0) +
+  facet_grid(rows = vars(normal_ef), cols = vars(c_age)) +
+  labs(linetype = "", color = "") +
+  crgg::theme_ki_standard() +
+  crgg::scale_colour_ki_d() +
+  crgg::scale_fill_ki_d() +
+  labs(fill = "") +
+  ylab("Loss of life expectancy (years)") +
+  xlab("Calendar year") +
+  coord_cartesian(ylim = c(0, 25))
+```
+
+Loss of life expectancy per index year. Adjusted for comorbidity.
+
+```{=tex}
+\newpage
+\KOMAoptions{paper=landscape,pagesize}
+\recalctypearea
+```
+## **Supplementary tables**
+
+### **Table S1, In-hospital course**
+
+```{r}
+#| eval: true
+s1 <-
+  readRDS("../output/tableS1.RDS")
+#names(s1) <- s1 %>% names() %>% linebreak()
+s1 %>% 
+  select(1:10) %>%
+  kable(booktabs = T) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  ) 
+```
+
+Medications are at discharge. NA = Not applicable.
+
+\newpage
+
+#### **Table S1, continued **
+```{r}
+s1 %>% 
+  select(c(1, 11:18)) %>%
+  kable(booktabs = T) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  ) 
+```
+
+Medications are at discharge. NA = Not applicable.
+\newpage
+
+### **Table S2: Excess mortality rate over time**
+
+```{r}
+#| echo: false
+#| eval: true
+mdiff_measures <- readRDS("../output/MD_table.rds")
+tab <-
+mdiff_measures %>%
+  filter(c_timetodeath_years %in% c(.5, 1., 5, 10, 15)) %>%
+  arrange(`Age group`) %>%
+  mutate(Estimate = round(Estimate * 1000, digits = 1),
+         upper = round(upper * 1000, digits = 1),
+         lower = round(lower * 1000, digits = 1),
+         value = paste0(Estimate, " (", lower, "-", upper, ")"),
+         Subgroup = paste0(Sex, ", ", `Age group`) %>% factor()) %>%
+  select(c_timetodeath_years, Subgroup, LVEF, value) %>%
+  pivot_wider(names_from = c_timetodeath_years, values_from = value) %>%
+  arrange(Subgroup, LVEF) %>%
+  rename(` ` = LVEF,
+         `  ` = Subgroup
+         )
+tab %>%
+  select(-`  `) %>%
+  kable(booktabs = TRUE) %>%
+  pack_rows(index = table(tab$`  `)) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  ) 
+```
+
+Excess mortality rate (mortality rate difference) cases vs comparators per 1000 person-years at .5, 1, 5, 10 and 15 years after MI.
+
+\newpage
+
+### **Table S3: Hazard ratio over time**
+
+```{r}
+#| echo: false
+#| eval: true
+hr_measures <- readRDS("../output/HR_table.rds")
+tab <- 
+hr_measures %>%
+  filter(c_timetodeath_years %in% c(.5, 1., 5, 10, 15)) %>%
+  arrange(`Age group`) %>%
+  mutate(Estimate = round(Estimate, digits = 1),
+         upper = round(upper, digits = 1),
+         lower = round(lower, digits = 1),
+         value = paste0(Estimate, " (", lower, "-", upper, ")"),
+         Subgroup = paste0(Sex, ", ", `Age group`) %>% factor()) %>%
+  select(c_timetodeath_years, Subgroup, LVEF, value) %>%
+  pivot_wider(names_from = c_timetodeath_years, values_from = value) %>%
+  arrange(Subgroup, LVEF) %>%
+  rename(` ` = LVEF,
+         `  ` = Subgroup
+         )
+tab %>%
+  select(-`  `) %>%
+  kable(booktabs = TRUE) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  )  %>%
+  pack_rows(index = table(tab$`  `)) 
+```
+
+Hazard ratio, cases vs comparators at .5, 1, 5, 10 and 15 years after MI.
+
+\newpage
+
+### **Table S4: Loss of life expectancy**
+
+```{r}
+#| echo: false
+#| eval: true
+lole_measures <- readRDS("../output/LOLE_MEASURES.rds")
+tab_lole <- 
+lole_measures %>%
+  filter(d_indexyear %in% c(1992, 2000 ,2007, 2015, 2022) & str_detect(label, "Loss of")) %>%
+  mutate(Value = round(Value, digits = 2) %>% as.character()) %>%
+  pivot_wider(names_from = valuetype, values_from = Value) %>%
+  # mutate(Value = paste0(Estimate, ", (XX)")) %>% # no CI
+  mutate(Value = paste0(Estimate, " (CI  ", lower, "-", upper, ")"),
+         Value = ifelse(str_detect(Value, "NA"), "-", Value),
+         ` ` = paste0(ifelse(c_sex == "male", "Males", "Females"), ", ", c_age,
+                      " years old")) %>%
+  select(` `, d_indexyear, normal_ef, Value) %>%
+  pivot_wider(names_from = d_indexyear, values_from = Value) %>%
+  arrange(` `, normal_ef) %>%
+  rename(`  ` = normal_ef)#  %>%
+tab_lole %>%
+  select(-` `) %>%
+  kable(booktabs = T) %>%
+  pack_rows(index = table(tab_lole$` `)) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  ) 
+```
+
+Loss of life expectancy in years over the course of the study.
+
+\newpage
+
+### **Table S5: Mean residual lifetime**
+
+```{r}
+#| echo: false
+#| warning: false
+#| eval: true
+mrl_tab <- 
+lole_measures %>%
+  filter(d_indexyear %in% c(1992, 2000 ,2007, 2015, 2022) & str_detect(label, "resid")) %>%
+  mutate(Value = round(Value, digits = 1),
+         valuetype = ifelse(str_detect(type, "Expe"), "Expected", valuetype)) %>% 
+  select(-rt_sex, -rt_year, -type, -rt_agedays, -label) %>%
+    pivot_wider(values_from = Value, names_from = valuetype) %>% 
+  mutate(percent = Estimate / Expected * 100,
+         table_value = paste0(Estimate, " (", lower, "-", upper, "); ", round(percent, digits = 1), "% of [", Expected, "]"),
+         table_value = ifelse(str_detect(table_value, "NA"), "··", table_value),
+         group = paste0(ifelse(c_sex == "male", "Males", "Females"), ", ", c_age,
+                      " years old")) %>% 
+  select(group, normal_ef, d_indexyear, table_value) %>% 
+  pivot_wider(names_from = d_indexyear, values_from = table_value) %>%
+  arrange(group, normal_ef)
+mrl_tab  %>%
+  select(-1)  %>%
+  rename(" "  = normal_ef) %>%
+  kable(booktabs = T) %>%
+  pack_rows(index = table(mrl_tab$group)) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  ) 
+```
+
+Mean residual lifetime in years over the course of the study. Expressed as: MRL (95% CI); percentage of \[Expected value\].
+
+\newpage
+
+### **Table S6: Adjusted loss of life expectancy**
+
+```{r}
+#| echo: false
+#| eval: true
+lole_measures_adjusted <- readRDS("../output/LOLE_MEASURES_adjusted.rds")
+lole_adj <- 
+lole_measures_adjusted %>%
+  filter(d_indexyear %in% c(1992, 2000 ,2007, 2015, 2022) & str_detect(label, "Loss of")) %>%
+  mutate(Value = round(Value, digits = 2) %>% as.character()) %>%
+  pivot_wider(names_from = valuetype, values_from = Value) %>%
+  # mutate(Value = paste0(Estimate, ", (XX)")) %>% # no CI
+  mutate(Value = paste0(Estimate, " (CI  ", lower, "-", upper, ")"),
+         Value = ifelse(str_detect(Value, "NA"), "-", Value),
+         group = paste0(ifelse(c_sex == "male", "Males", "Females"), ", ", c_age,
+                      " years old")) %>%
+  select(group, d_indexyear, normal_ef, Value) %>%
+  pivot_wider(names_from = d_indexyear, values_from = Value) %>%
+  arrange(group, normal_ef) 
+lole_adj %>%
+  select(-group) %>%
+  rename(`  ` = normal_ef) %>%
+  kable(booktabs = T) %>%
+  pack_rows(index = table(lole_adj$group)) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  ) 
+```
+
+Loss of life expectancy in years over the course of the study. Adjusted for socioeconomic variables, comorbidities at baseline, and medications at baseline.
+
+\newpage
+
+### **Table S7: Adjusted mean residual lifetime**
+
+```{r}
+#| echo: false
+#| warning: false
+#| eval: true
+mrl_adj <- 
+lole_measures_adjusted %>%
+  filter(d_indexyear %in% c(1992, 2000 ,2007, 2015, 2022) & str_detect(label, "resid")) %>%
+  mutate(Value = round(Value, digits = 1),
+         valuetype = ifelse(str_detect(type, "Expe"), "Expected", valuetype)) %>% 
+  select(-rt_sex, -rt_year, -type, -rt_agedays, -label) %>%
+    pivot_wider(values_from = Value, names_from = valuetype) %>% 
+  mutate(percent = Estimate / Expected * 100,
+         table_value = paste0(Estimate, " (", lower, "-", upper, "); ", round(percent, digits = 1), "% of [", Expected, "]"),
+         table_value = ifelse(str_detect(table_value, "NA"), "-", table_value),
+         group = paste0(ifelse(c_sex == "male", "Males", "Females"), ", ", c_age,
+                      " years old")) %>% 
+  select(group, normal_ef, d_indexyear, table_value) %>% 
+  pivot_wider(names_from = d_indexyear, values_from = table_value) %>%
+  arrange(group, normal_ef)
+mrl_adj %>%
+  select(-1) %>%
+  rename(" " = normal_ef) %>%
+  kable(booktabs = T) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  )  %>%
+  pack_rows(index = table(mrl_adj$group))
+```
+
+Mean residual lifetime in years over the course of the study. Expressed as: MRL (95% CI); percentage of \[Expected value\].
