@@ -59,3 +59,4 @@ rsconnect/
 /reports/supplement_files
 /reports/supplement_cache
 /reports/images
+*.docx

@@ -11,16 +11,6 @@ study_population <-
   # mutate(c_timetodeath_days = ifelse(c_timetodeath_days == 0, 0.0001, c_timetodeath_days)) %>%
   # And add some variables
   mutate(
-    c_pci_treatment = case_when(
-      d_repertreatment == 2 ~ T,
-      is.na(d_repertreatment) ~ NA,
-      T ~ F
-    ),
-    c_coronary_angio = case_when(
-      d_repertreatment %in% c(2, 4) ~ T,
-      is.na(d_repertreatment) ~ NA,
-      T ~ F
-    ),
     c_LVEF = case_when(
       d_left_ventricular_function == 1 ~ "Normalt (>=50%)",
       d_left_ventricular_function == 2 ~ "Lätt nedsatt (40-49%)",

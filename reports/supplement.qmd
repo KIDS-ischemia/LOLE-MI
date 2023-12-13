@@ -12,6 +12,7 @@ author:
   - Paul W Dickman
   - Tomas Jernberg
 format:
+  docx: default
   pdf:
     fig-width: 7
     fig-height: 5
@@ -25,9 +26,10 @@ sansfont: Times New Roman
 editor: source
 toc: true
 bibliography: references.bib
-csl: the-lancet.csl
+csl: jama.csl
 execute:
   cache: false
+prefer-html: true
 ---
 
 ```{r setup}
@@ -48,7 +50,7 @@ theme_set(crgg::theme_ki_standard())
 
 ## **Data**
 
-All case subjects were identified from the SWEDEHEART subregister RIKS-HIA which registers all individuals admitted to a cardiac care unit in Sweden, and were tracked using their national personal identification number (*personnummer*). Statistics Sweden (SCB), the national statistics agency, then matched all individuals with up to 5 comparators with (to SCB) no known prior MI. The comparators were matched on age, sex, year of birth, and geographic location (*kommun*). The resulting list of individuals were then enriched with data from SCB; socioeconomic variables. The list delivered to SCB contained some artifacts, mainly test persons from SWEDEHEART, which were found to not be alive when the register started, and were thus removed. All valid cases were enriched with SWEDEHEART/RIKS-HIA data, and with data from the National Board of Health and Welfare (ICD codes on prior diagnoses from the Patient register and the prescribed drug register). Some cases and comparators were then found, based on these variables, to have experienced a prior MI, and were thus removed. Some cases were found to have multiple entries that were registered as the first MI, we then selected only the first. Cases without at least one matched comparator were excluded. The process is also illustrated in fig. S1.
+All case subjects were identified from the SWEDEHEART subregister RIKS-HIA which registers all individuals admitted to a cardiac care unit in Sweden, and were tracked using their national personal identification number (*personnummer*). Statistics Sweden (SCB), the national statistics agency, then matched all individuals with up to 5 comparators with (to SCB) not present in the case group at that point. The comparators were matched on age, sex, year of birth, and geographic location (*kommun*). The resulting list of individuals were then enriched with data from SCB; socioeconomic variables before the data was delivered to the researchers. Data merging was performed by the researchers. The list delivered to SCB contained some artifacts, mainly test persons from SWEDEHEART, which were found to not be alive when the register started, and were thus removed. All valid cases were enriched with SWEDEHEART/RIKS-HIA data, and with data from the National Board of Health and Welfare (ICD codes on prior diagnoses from the Patient register and the prescribed drug register). Some cases and comparators were then found, based on these variables, to have experienced a prior MI, and were thus removed. Some cases were found to have multiple entries that were registered as the first MI, we then selected only the first. Cases without at least one matched comparator were excluded. The process is also illustrated in fig. S1.
 
 #### **Variables**
 
@@ -185,7 +187,7 @@ readRDS("../output/LOLE_MEASURES_adjusted_granular_unadjusted.rds") %>%
   coord_cartesian(ylim = c(0, 25))
 ```
 
-Loss of life expectancy per index year.
+Loss of life expectancy with 95% confidence interval per index year.
 
 ### **Figure S4b LOLE for LVEF subcategories (Adjusted)**
 
@@ -209,7 +211,7 @@ Loss of life expectancy per index year.
   coord_cartesian(ylim = c(0, 25))
 ```
 
-Loss of life expectancy per index year. Adjusted for comorbidity.
+Loss of life expectancy with 95% confidence interval per index year. Adjusted for comorbidity.
 
 ```{=tex}
 \newpage

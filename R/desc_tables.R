@@ -9,9 +9,6 @@ library(gt)
 # Read data
 source("R/import_data.R")
 
-# Lancet wants midline decimals
-options(OutDec = "·")
-
 #### 1. Baseline table ####
 ### Table one
 study_population <-
@@ -30,7 +27,7 @@ study_population <-
     ) %>%
       factor(levels = c("Married/reg. Partner", "Unmarried", "Divorced")),
     `Born abroad` = c_utrikesfodd,
-    `Disposable income (per family, SEK/year)` = TJ_disp_ink,
+    `Disposable income (per family, SEK/year)` = TJ_disp_ink_fam,
     `Disposable income strata` = case_when(c_disp_inkomst_kat == "Låg" ~ "Low",
                                             c_disp_inkomst_kat == "Mellan" ~ "Middle",
                                             c_disp_inkomst_kat == "Hög" ~ "High",
@@ -102,7 +99,6 @@ table1 %>%
 
 #### 2. additional tables and figures #####
 
-options(OutDec = ".")
 
 # in-hospital characteristics over time
 study_population <-
@@ -113,8 +109,8 @@ study_population <-
     year_group = ifelse(d_indexyear == 2022, "2022", year_group),
     # Format variables for table
     STEMI = ifelse(csub_STEMI == "STEMI", 1, 0),
-    `Coronary angiography` = c_coronary_angio,
-    `PCI treatment` = c_pci_treatment,
+    `Coronary angiography` = d_angio,
+    `PCI treatment` = d_pci,
     CABG = d_cabg,
     `Reinfarction during hospital stay` = d_myocardial_reinfarct_hospital,
     `Cardiogenic shock` = d_cardiogenic_shock,
