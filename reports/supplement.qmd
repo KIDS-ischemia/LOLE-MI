@@ -12,7 +12,6 @@ author:
   - Paul W Dickman
   - Tomas Jernberg
 format:
-  docx: default
   pdf:
     fig-width: 7
     fig-height: 5
@@ -26,7 +25,7 @@ sansfont: Times New Roman
 editor: source
 toc: true
 bibliography: references.bib
-csl: jama.csl
+csl: circulation.csl
 execute:
   cache: false
 prefer-html: true
