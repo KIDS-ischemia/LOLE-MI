@@ -60,3 +60,8 @@ rsconnect/
 /reports/supplement_cache
 /reports/images
 *.docx
+R/variant_plots.R
+
+# other
+CR*
+

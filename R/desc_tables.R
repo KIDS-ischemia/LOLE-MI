@@ -216,3 +216,41 @@ study_population %>%
   group_by(c_case) %>% 
   summarise(n_deaths = sum(c_dead), pct_dead = sum(c_dead) / n() * 100) %>%
   saveRDS(file = "output/n_deaths.RDS")
+
+# subgroup n
+bind_rows(
+  study_population %>% 
+    group_by(case_or_control, normal_ef) %>%
+    tally() %>%
+    pivot_wider(names_from = case_or_control, values_from = n) %>%
+    rename(Subgroup = normal_ef) %>%
+    # not sensible for comparators
+    mutate(Control = NA),
+  study_population %>%
+    group_by(case_or_control, subgroup_all) %>%
+    tally() %>%
+    pivot_wider(names_from = case_or_control, values_from = n) %>%
+    rename(Subgroup = subgroup_all),
+  study_population %>%
+    group_by(case_or_control, subgroup_with_ef) %>%
+    tally() %>%
+    pivot_wider(names_from = case_or_control, values_from = n) %>%
+    rename(Subgroup = subgroup_with_ef) 
+) %>%
+  filter(!is.na(Subgroup)) %>%
+  rename(Comparator = Control) %>%
+  saveRDS(file = "output/subgroup_n.RDS")
+
+
+
+  
+# Check how many comparators later present in case group
+comp_id <- 
+  study_population[study_population$c_case == F, "idnr"] %>% select(idnr)
+case_id <- study_population[study_population$c_case == T, "idnr"] %>% pull(idnr)
+
+comp_id %>%
+  mutate(later_MI = idnr %in% case_id) %>%
+  group_by(later_MI) %>%
+  tally() %>%
+  mutate(Percent = n / sum(n) * 100)

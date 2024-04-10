@@ -49,7 +49,7 @@ theme_set(crgg::theme_ki_standard())
 
 ## **Data**
 
-All case subjects were identified from the SWEDEHEART subregister RIKS-HIA which registers all individuals admitted to a cardiac care unit in Sweden, and were tracked using their national personal identification number (*personnummer*). Statistics Sweden (SCB), the national statistics agency, then matched all individuals with up to 5 comparators with (to SCB) not present in the case group at that point. The comparators were matched on age, sex, year of birth, and geographic location (*kommun*). The resulting list of individuals were then enriched with data from SCB; socioeconomic variables before the data was delivered to the researchers. Data merging was performed by the researchers. The list delivered to SCB contained some artifacts, mainly test persons from SWEDEHEART, which were found to not be alive when the register started, and were thus removed. All valid cases were enriched with SWEDEHEART/RIKS-HIA data, and with data from the National Board of Health and Welfare (ICD codes on prior diagnoses from the Patient register and the prescribed drug register). Some cases and comparators were then found, based on these variables, to have experienced a prior MI, and were thus removed. Some cases were found to have multiple entries that were registered as the first MI, we then selected only the first. Cases without at least one matched comparator were excluded. The process is also illustrated in fig. S1.
+All case subjects were identified from the SWEDEHEART subregister RIKS-HIA which registers all individuals admitted to a cardiac care unit in Sweden, and were tracked using their national personal identification number (*personnummer*). Statistics Sweden (SCB), the national statistics agency, then matched all individuals with up to 5 comparators not present in the case group at that point. The comparators were matched on age, sex, year of birth, and geographic location (*kommun*). The resulting list of individuals were then enriched with data from SCB, by SCB, before the data was delivered to the researchers. Data merging was performed by the researchers. The list delivered to SCB contained some artifacts, mainly test persons from SWEDEHEART, which were found to not be alive when the register started, and were thus removed. All valid cases were enriched with SWEDEHEART/RIKS-HIA data, and with data from the National Board of Health and Welfare (ICD codes on prior diagnoses from the Patient register and the prescribed drug register). Some cases and comparators were then found, based on these variables, to have experienced a prior MI, and were thus removed. Some cases were found to have multiple entries that were registered as the first MI, we then selected only the first. Cases without at least one matched comparator were excluded. The process is also illustrated in fig. S1.
 
 #### **Variables**
 
@@ -125,7 +125,7 @@ Percentage missing for all variables common for cases and comparators (those use
 
 #### **Flexible parametric survival models**
 
-To model survival and relative survival, we employed flexible parametric survival models (Royston-Parmar models), which enable fitting smooth curves to the survival data.[@Royston2002] These models offer the advantage of post-estimation analysis of survival curve derivatives, such as hazard over time. Additionally, they allow us to relax the proportional hazards assumption, facilitating the modeling of time-varying effects. This makes it possible to capture the steep initial difference in mortality expected between a population with myocardial infarction (MI) and one without.
+To model survival and relative survival, we employed flexible parametric survival models (Royston-Parmar models), which enable fitting smooth curves to the survival data. These models offer the advantage of post-estimation analysis of survival curve derivatives, such as hazard over time. Additionally, they allow us to relax the proportional hazards assumption, facilitating the modeling of time-varying effects. This makes it possible to capture the steep initial difference in mortality expected between a population with myocardial infarction (MI) and one without.
 
 #### **Survival analysis**
 
@@ -149,22 +149,64 @@ Additionally, we constructed other versions of the life table adjusted for basel
 A)  Relative flexible parametric models for the total case population, as well as for those with preserved LVEF and those with impaired LVEF.
 B)  Identical models to those in A), but this time using the covariable-adjusted life table. Using the relative models, we estimated loss of life expectancy and mean residual lifetime for males and females at ages 50, 65, and 80, for the years 1991-2022. The same calculations were performed separately for models involving preserved and impaired LVEF.
 
-When deciding the number of knots for these relative models we assessed the AIC values for each model, and found that, in most cases, `df =  5-8` minimized values. However, upon further assessment of the models, we found that this approach in some cases led to strange results, such as inconsistent estimates of LOLE and MRL. It also resulted in "wiggly" hazard curves, which we interpreted as probable overfitting. We therefore adjusted some models after graphical assessment of survival and hazard curves and ended up with df´s in the range of 4-7, preferring lower, rather than higher degrees of freedom. This reasoning is consistent with the suggestions from Royston and Lambert (2011).[@royston_flexible_2011]
+When deciding the number of knots for these relative models we assessed the AIC values for each model, and found that, in most cases, `df =  5-8` minimized values. However, upon further assessment of the models, we found that this approach in some cases led to strange results, such as inconsistent estimates of LOLE and MRL. It also resulted in "wiggly" hazard curves, which we interpreted as probable overfitting. We therefore adjusted some models after graphical assessment of survival and hazard curves and ended up with df´s in the range of 4-7, preferring lower, rather than higher degrees of freedom. This reasoning is consistent with the suggestions from Royston and Lambert (2011).
 
 #### **Software and packages**
 
-All data handling and statistics were performed in `r version$version.string`.[@Rcore] We used the packages `survival` and `rstpm2` for R to model survival.[@survival; @rstpm2] For relative survival post-estimation (loss of life expectancy measures and mean residual lifetime) we used the `CuRe` package.[@cuRe] For data handling and graphics we used the `tidyverse` and related packages (i.e `ggplot`, `broom`, `tidyr`, `patchwork`). For descriptive statistics we used the package `gtsummary`.[@broom; @ggplot2; @broom-2; @patchwork; @gtsummary] The statistical code for this project is available on https://github.com/KIDS-ischemia/LOLE-MI.
+All data handling and statistics were performed in `r version$version.string`.[@Rcore] We used the packages `survival` and `rstpm2` for R to model survival.[@survival; @rstpm2] For relative survival post-estimation (loss of life expectancy measures and mean residual lifetime) we used the `CuRe` package.[@cuRe] For data handling and graphics we used the `tidyverse` and related packages (i.e `ggplot`, `broom`, `tidyr`, `patchwork`).[@broom; @ggplot2; @broom-2; @patchwork] For descriptive statistics we used the package `gtsummary`.[@gtsummary] The statistical code for this project is available on https://github.com/KIDS-ischemia/LOLE-MI.
 
-#### **References**
+#### **List of packages**
 
 ::: {#refs}
 :::
 
 \newpage
 
+### **Sensitivity Analysis** ###
+
+In order to calculate LOLE and MRL, we have to extrapolate the survival curves until *S = 0*. This is easier if we have longer observation times. In the present study, follow-up times vary between 1 and 30 years, and much has happened in that time period which can impact survival, such as the introduction of modern medical therapy and PCI after MI. 
+The relative model overcomes some of the issues with extrapolation because it uses the known form of the survival curve from the background population, and assume it is similar for the study group. Still, in this study, those with a longer observation time received different treatment than those with shorter observation times, and the long-time survival may be different. We therefore performed a sensitivity analysis where we censored all survival times at 5 years after MI for the case group, and then refit relative models. 
+
+### **Figure S4: Sensitivity Analysis, Truncated survival times. Unadjusted LOLE.** 
+
+```{r}
+#| fig.width: 6
+#| fig.height: 5
+#| fig-pos: 'h'
+readRDS("../output/LOLE_MEASURES_UNADJ_SENS.rds") %>%
+  mutate(normal_ef = case_when(normal_ef == "All" ~ "all", 
+                               normal_ef == "Impaired EF" ~ "LVEF <50%",
+                               normal_ef == "Normal EF" ~ "LVEF >=50%",
+                               T ~ normal_ef
+  )) %>% 
+  pivot_wider(values_from = Value, names_from = valuetype) %>%
+  filter(str_detect(type, "lole")) %>%
+  ggplot(aes(x = d_indexyear, y = Estimate, color = rt_sex, fill = rt_sex, ymin = lower, ymax = upper)) +
+  geom_line() +
+  geom_ribbon(alpha = .1, linewidth = 0) +
+  facet_grid(rows = vars(normal_ef), cols = vars(c_age)) +
+  labs(linetype = "", color = "") +
+  crgg::theme_ki_standard() +
+  crgg::scale_colour_ki_d() +
+  crgg::scale_fill_ki_d() +
+  labs(fill = "") +
+  ylab("Loss of life expectancy (years)") +
+  xlab("Calendar year") +
+  coord_cartesian(ylim = c(0, 15))
+```
+
+
+
+
+We found that the loss of life expectancy decreased, especially among those with a longer observation time – younger individuals. Among the elderly, figures were similar. The regular flexible models from the main analysis (not relative) showed that the youngest individuals flatten out at a higher relative hazard over a long period of time after MI, whereas the older individuals has a much smaller relative hazard after the initial high mortality associated with the acute MI. Thus, a decrease in LOLE is expected in the youngest when shortening survival times. 
+These sensitivity analyses shows that the length of observation time impacts the estimation of long term prognosis in the youngest. Because we have no way of assessing the shape of the future curve, we opt to assume that the shape of the survival curve is similar to the nearest years before. This is done by modeling the calendar year variable with a low degree of freedom (`df = 2`). 
+
+
+\newpage
+
 ## **Supplementary figures**
 
-### **Figure S4a LOLE for LVEF subcategories (Unadjusted)**
+### **Figure S5a: LOLE for LVEF subcategories (Unadjusted)**
 
 ```{r lole_unadj}
 #| fig.width: 10
@@ -188,7 +230,7 @@ readRDS("../output/LOLE_MEASURES_adjusted_granular_unadjusted.rds") %>%
 
 Loss of life expectancy with 95% confidence interval per index year.
 
-### **Figure S4b LOLE for LVEF subcategories (Adjusted)**
+### **Figure S5b: LOLE for LVEF subcategories (Adjusted)**
 
 ```{r lole_adj}
 #| fig.width: 10
@@ -219,7 +261,7 @@ Loss of life expectancy with 95% confidence interval per index year. Adjusted fo
 ```
 ## **Supplementary tables**
 
-### **Table S1, In-hospital course**
+### **Table S1: In-hospital course**
 
 ```{r}
 #| eval: true
@@ -239,7 +281,7 @@ Medications are at discharge. NA = Not applicable.
 
 \newpage
 
-#### **Table S1, continued **
+#### **Table S1: continued **
 ```{r}
 s1 %>% 
   select(c(1, 11:18)) %>%
@@ -425,7 +467,7 @@ lole_adj %>%
 
 Loss of life expectancy in years over the course of the study. Adjusted for socioeconomic variables, comorbidities at baseline, and medications at baseline.
 
-\newpage
+\newpage 
 
 ### **Table S7: Adjusted mean residual lifetime**
 
@@ -460,3 +502,26 @@ mrl_adj %>%
 ```
 
 Mean residual lifetime in years over the course of the study. Expressed as: MRL (95% CI); percentage of \[Expected value\].
+
+```{=tex}
+\newpage
+\KOMAoptions{paper=portrait,pagesize}
+\recalctypearea
+```
+
+### **Table S8: Subgroup sizes**
+
+```{r}
+#| echo: false
+#| warning: false
+#| eval: true
+subgroup_table <- readRDS("../output/subgroup_n.RDS") 
+subgroup_table %>%
+  kable(booktabs = T) %>%
+  kable_styling(
+    font_size = 8,
+    latex_options = "HOLD_position"
+  ) 
+```
+
+A table describing the size of subgroups used in the study.
