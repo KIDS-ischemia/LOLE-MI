@@ -181,7 +181,7 @@ SOS -> sos_comparators
 [9]: 'Comparators enriched with SOS data \\n n = 1,883,253' 
 [10]: 'Diagnoses and medication \\n data from SOS' 
 [11]: 'Comparators without prior AMI \\n n = 1,821,279'
-[12]: 'Comparators found to have prior AMI diagnosis \\n n = 61,973'
+[12]: 'Comparators found to have \\nprior AMI diagnosis \\n n = 61,973'
 [13]: 'Cases with prior MI \\n n = 135,484'
 [14]: 'Cases with confirmed MI \\n but no diagnosis of prior MI \\n n = 355,456'
 [15]: 'Only first occurrance of \\n every individual, n = 343,921'
