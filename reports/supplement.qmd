@@ -71,7 +71,7 @@ Some variables were processed from the original data:
 
 ### **Figure S1: Data selection flowchart**
 
-![](images/flowchart.pdf)
+![](../output/flowchart.pdf)
 
 ### **Figure S2: yearly distribution of cases and comparators.**
 
