@@ -27,7 +27,8 @@ MortalityRate_curves_lvef <-
   xlab("Time since MI or index date in years") +
   coord_cartesian(ylim = c(0, 250)) +
   crgg::scale_colour_ki_d() +
-  crgg::scale_fill_ki_d()
+  crgg::scale_fill_ki_d() +
+  theme(strip.clip = "off")
 
 # HR curves
 HR_curves_lvef <-
@@ -45,7 +46,8 @@ HR_curves_lvef <-
   xlab("Time since MI or index date in years") +
   coord_cartesian(ylim = c(0, 7), xlim = c(0, 15)) +
   crgg::scale_colour_ki_d() +
-  crgg::scale_fill_ki_d()
+  crgg::scale_fill_ki_d() +
+  theme(strip.clip = "off")
 
 # Combine and save
 MR_HR_plot <- MortalityRate_curves_lvef + HR_curves_lvef + plot_annotation(tag_levels = 'A')
@@ -71,7 +73,8 @@ survival_curves <-
   ylab("Survival") +
   xlab("Time since MI or index date in years") +
   crgg::scale_colour_ki_d() +
-  crgg::scale_fill_ki_d()
+  crgg::scale_fill_ki_d()  +
+  theme(strip.clip = "off")
 ggsave("output/figure_2.pdf", plot = survival_curves, width = 12, height = 8)
 # Embed font
 embed_fonts("output/figure_2.pdf", outfile = "output/figure_2.pdf")
